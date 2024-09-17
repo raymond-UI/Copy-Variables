@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button, select { display: block; width: 100%; margin: 10px 0; padding: 10px; }
+    h2 { margin-bottom: 20px; }
+    #btnwwrapper { display: flex; justify-content: space-between; gap: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Variable Collection Copier</h2>
+  <div >
+    <select id="collectionSelect">
+      <option value="">-- Select Collection --</option>
+    </select>
+    <div id="btnwwrapper">
+      <button id="copyBtn" disabled>Copy Collection</button>
+      <button id="pasteBtn" disabled>Paste Collection</button>
+    </div>
+  </div>
+  <p id="status"></p>
+
+  <script>
+    let copiedCollection = null;
+
+    // Request all collections when UI loads
+    parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
+
+    const selectElement = document.getElementById('collectionSelect');
+    const copyButton = document.getElementById('copyBtn');
+    const pasteButton = document.getElementById('pasteBtn');
+    const statusElement = document.getElementById('status');
+
+    selectElement.onchange = () => {
+      if (selectElement.value) {
+        copyButton.disabled = false;
+      } else {
+        copyButton.disabled = true;
+      }
+    };
+
+    copyButton.onclick = () => {
+      const selectedCollectionId = selectElement.value;
+      if (selectedCollectionId) {
+        parent.postMessage({ pluginMessage: { type: 'copy-collection', collectionId: selectedCollectionId } }, '*');
+      }
+    };
+
+    pasteButton.onclick = () => {
+      if (copiedCollection) {
+        parent.postMessage({ pluginMessage: { type: 'paste-collection', data: copiedCollection } }, '*');
+      }
+    };
+
+    onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+
+      if (msg.type === 'no-collections') {
+        statusElement.textContent = 'No variable collections found.';
+      } 
+
+      else if (msg.type === 'collections-list') {
+        selectElement.innerHTML = '<option value="">-- Select Collection --</option>';
+        msg.data.forEach((collection) => {
+          const option = document.createElement('option');
+          option.value = collection.id;
+          option.textContent = collection.name;
+          selectElement.appendChild(option);
+        });
+      } 
+
+      else if (msg.type === 'collection-copied') {
+        copiedCollection = msg.data;
+        pasteButton.disabled = false;
+        statusElement.textContent = 'Collection copied. Ready to paste!';
+      } 
+
+      else if (msg.type === 'collection-pasted') {
+        statusElement.textContent = 'Collection pasted successfully!';
+      }
+    };
+  </script>
+</body>
+</html>

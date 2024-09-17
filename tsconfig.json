@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2019",
+    "lib": ["es2019"], // Removed "dom" to avoid conflicts
+    "strict": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/@figma"
+    ]
+  },
+  "exclude": [
+    "node_modules/typescript/lib/lib.dom.d.ts"
+  ]
+}
