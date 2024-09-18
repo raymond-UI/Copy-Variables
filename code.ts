@@ -16,7 +16,7 @@ type CollectionInfo = {
   variables: VariableInfo[];
 };
 
-figma.showUI(__html__, { width: 400, height: 300 });
+figma.showUI(__html__, { themeColors: true,  width: 400, height: 300 });
 
 figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: CollectionInfo }) => {
   if (msg.type === 'get-collections') {
@@ -25,15 +25,29 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
       figma.ui.postMessage({ type: 'no-collections' });
       return;
     }
-    
-    // Send collection info back to the UI for display
+
     const collectionsInfo = collections.map(collection => ({
       id: collection.id,
       name: collection.name,
     }));
-    
+
     figma.ui.postMessage({ type: 'collections-list', data: collectionsInfo });
   } 
+
+  else if (msg.type === 'check-saved-collection') {
+    const userId = figma.currentUser?.id;
+    if (!userId) {
+      figma.ui.postMessage({ type: 'user-not-logged-in' });
+      return;
+    }
+
+    const collectionData = await figma.clientStorage.getAsync(`collection-${userId}`);
+    if (collectionData) {
+      figma.ui.postMessage({ type: 'saved-collection-found', data: collectionData });
+    } else {
+      figma.ui.postMessage({ type: 'no-saved-collection' });
+    }
+  }
 
   else if (msg.type === 'copy-collection' && msg.collectionId) {
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
@@ -44,11 +58,7 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
       return;
     }
 
-    console.log('Selected Collection:', selectedCollection);
-
     const variables = await Promise.all(selectedCollection.variableIds.map(id => figma.variables.getVariableByIdAsync(id)));
-
-    console.log('Fetched Variables:', variables);
 
     const collectionData: CollectionInfo = {
       id: selectedCollection.id,
@@ -58,48 +68,55 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
         name: v.name,
         resolvedType: v.resolvedType,
         valuesByMode: Object.fromEntries(
-          Object.entries(v.valuesByMode).map(([modeId, value]) => [modeId, value])
+          Object.entries(v.valuesByMode).map(([modeId, value]) => [modeId, value as VariableValue])
         )
       }))
     };
 
-    console.log('Collection Data to be Copied:', collectionData);
+    const userId = figma.currentUser?.id;
+    if (!userId) {
+      figma.ui.postMessage({ type: 'user-not-logged-in' });
+      return;
+    }
+
+    await figma.clientStorage.setAsync(`collection-${userId}`, collectionData);
 
     figma.ui.postMessage({ type: 'collection-copied', data: collectionData });
   } 
 
-  else if (msg.type === 'paste-collection' && msg.data) {
-    const collectionData = msg.data;
+  else if (msg.type === 'paste-collection') {
+    const userId = figma.currentUser?.id;
+    if (!userId) {
+      figma.ui.postMessage({ type: 'user-not-logged-in' });
+      return;
+    }
 
-    console.log('Collection Data to be Pasted:', collectionData);
+    const collectionData = await figma.clientStorage.getAsync(`collection-${userId}`);
+    if (!collectionData) {
+      figma.ui.postMessage({ type: 'no-copied-collection' });
+      return;
+    }
+
     const newCollection = figma.variables.createVariableCollection(collectionData.name);
-    console.log('New Collection Created:', newCollection);
-    
     const modeIdMap: { [oldModeId: string]: string } = {};
-    modeIdMap[collectionData.modes[0].modeId] = newCollection.modes[0].modeId; // Map default mode
-    
-    collectionData.modes.slice(1).forEach((mode) => { 
+    modeIdMap[collectionData.modes[0].modeId] = newCollection.modes[0].modeId;
+
+    collectionData.modes.slice(1).forEach((mode: Mode) => { 
         const newMode = newCollection.addMode(mode.name);
         modeIdMap[mode.modeId] = newMode;
-        console.log('New Mode Added:', newMode);
     });
-    
+
     for (const v of collectionData.variables) {
-        const newVariable = figma.variables.createVariable(v.name, newCollection, v.resolvedType); // Pass the collection node
-        console.log('New Variable Created:', newVariable);
-    
+        const newVariable = figma.variables.createVariable(v.name, newCollection, v.resolvedType);
+
         for (const [oldModeId, value] of Object.entries(v.valuesByMode)) {
             const newModeId = modeIdMap[oldModeId];
             if (newModeId) {
-                newVariable.setValueForMode(newModeId, value);
-                console.log(`Set Value for Mode: ${newModeId}, Value: ${value}`);
-            } else {
-                console.error(`Mode ID ${oldModeId} not found in modeIdMap`);
+                newVariable.setValueForMode(newModeId, value as VariableValue);
             }
         }
     }
-    
+
     figma.ui.postMessage({ type: 'collection-pasted' });
-    console.log('Collection Pasted Successfully');
   }
 };

@@ -1,16 +1,46 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    button, select { display: block; width: 100%; margin: 10px 0; padding: 10px; }
-    h2 { margin-bottom: 20px; }
-    #btnwwrapper { display: flex; justify-content: space-between; gap: 16px; }
+    .figma-light body {
+      background-color: rgb(36, 36, 36);
+      color: rgb(255, 255, 255);
+    }
+
+    .figma-dark body {
+      background-color: rgb(255, 255, 255);
+      color: rgb(23, 23, 23);
+    }
+
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    button,
+    select {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    #btnwwrapper {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
   </style>
 </head>
+
 <body>
   <h2>Variable Collection Copier</h2>
-  <div >
+  <div>
     <select id="collectionSelect">
       <option value="">-- Select Collection --</option>
     </select>
@@ -26,6 +56,8 @@
 
     // Request all collections when UI loads
     parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
+    // Check for saved collection data when UI loads
+    parent.postMessage({ pluginMessage: { type: 'check-saved-collection' } }, '*');
 
     const selectElement = document.getElementById('collectionSelect');
     const copyButton = document.getElementById('copyBtn');
@@ -58,7 +90,7 @@
 
       if (msg.type === 'no-collections') {
         statusElement.textContent = 'No variable collections found.';
-      } 
+      }
 
       else if (msg.type === 'collections-list') {
         selectElement.innerHTML = '<option value="">-- Select Collection --</option>';
@@ -68,18 +100,29 @@
           option.textContent = collection.name;
           selectElement.appendChild(option);
         });
-      } 
+      }
 
       else if (msg.type === 'collection-copied') {
         copiedCollection = msg.data;
         pasteButton.disabled = false;
         statusElement.textContent = 'Collection copied. Ready to paste!';
-      } 
+      }
 
       else if (msg.type === 'collection-pasted') {
         statusElement.textContent = 'Collection pasted successfully!';
       }
+
+      else if (msg.type === 'saved-collection-found') {
+        copiedCollection = msg.data;
+        pasteButton.disabled = false;
+        statusElement.textContent = 'Saved collection found. Ready to paste!';
+      }
+
+      else if (msg.type === 'no-saved-collection') {
+        statusElement.textContent = 'No saved collection found.';
+      }
     };
   </script>
 </body>
+
 </html>
