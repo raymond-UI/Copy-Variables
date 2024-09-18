@@ -4,16 +4,20 @@
 <head>
   <style>
     .figma-light body {
-      background-color: rgb(36, 36, 36);
-      color: rgb(255, 255, 255);
+      background-color: var(--figma-color-bg);
+      color: var(--figma-color-text);
     }
 
     .figma-dark body {
-      background-color: rgb(255, 255, 255);
-      color: rgb(23, 23, 23);
+      background-color: var(--figma-color-bg);
+      color: var(--figma-color-text);
     }
 
     body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+
       font-family: sans-serif;
       padding: 20px;
     }
@@ -22,24 +26,67 @@
     select {
       display: block;
       width: 100%;
-      margin: 10px 0;
       padding: 10px;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+
+    button {
+      color: var(--figma-color-text-oncomponent);
+      background-color: var(--figma-color-bg-component);
+      margin-bottom: 16px;
+      border: 1px solid var(--figma-color-border);
+    }
+
+    button:hover {
+      background-color: var(--figma-color-bg-component-hover);
+    }
+
+    button:active {
+      background-color: var(--figma-color-bg-brand);
+    }
+
+    button:disabled {
+      background-color: var(--figma-color-bg-disabled);
+      cursor: not-allowed;
+    }
+
+    select {
+      background-color: var(--figma-color-bg);
+      border: 1px solid var(--figma-color-border-component);
+      margin-bottom: 24px;
+      color: var(--figma-color-text-component);
     }
 
     h2 {
+      text-align: center;
       margin-bottom: 20px;
+      font: 1em sans-serif;
     }
 
     #btnwwrapper {
       display: flex;
+      flex-direction: column;
       justify-content: space-between;
-      gap: 16px;
+      margin-top: 16px;
+    }
+
+    #status {
+      background-color: var(--figma-color-bg-success-tertiary);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      color: var(--figma-color-text-onsuccess);
+      font-size: 14px;
+
     }
   </style>
 </head>
 
 <body>
-  <h2>Variable Collection Copier</h2>
+  <p id="status"></p>
+
+  <h2>Select a collection</h2>
   <div>
     <select id="collectionSelect">
       <option value="">-- Select Collection --</option>
@@ -49,7 +96,6 @@
       <button id="pasteBtn" disabled>Paste Collection</button>
     </div>
   </div>
-  <p id="status"></p>
 
   <script>
     let copiedCollection = null;

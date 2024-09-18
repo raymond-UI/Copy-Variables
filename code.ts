@@ -16,7 +16,7 @@ type CollectionInfo = {
   variables: VariableInfo[];
 };
 
-figma.showUI(__html__, { themeColors: true,  width: 400, height: 300 });
+figma.showUI(__html__, { themeColors: true,  width: 255, height: 400 });
 
 figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: CollectionInfo }) => {
   if (msg.type === 'get-collections') {
