@@ -1,36 +1,43 @@
-# Copy Variables
+# Copy Variables Plugin
 
-This project provides utilities to copy variables efficiently between different scopes and contexts in your code.
+## Overview
 
-## Features
+The Copy Variables Plugin for Figma allows users to copy and paste variable collections between different Figma files. This can be particularly useful for maintaining consistency across multiple projects or for sharing variable collections with team members.
 
-- Copy variables from one scope to another
-- Support for various data types
-- Easy integration with existing projects
+## How It Works
 
-## Installation
+### Code.ts
 
-To install the package, use the following command:
+The `code.ts` file contains the main logic for the plugin. It handles communication between the Figma environment and the plugin's user interface.
 
-```sh
-npm install copy-variables
-```
+- **Initialization**: The plugin UI is displayed using `figma.showUI`.
+- **Message Handling**: The plugin listens for messages from the UI and performs actions based on the message type:
+    - `get-collections`: Fetches all local variable collections and sends them to the UI.
+    - `check-saved-collection`: Checks if there is a saved collection in the user's client storage.
+    - `copy-collection`: Copies the selected collection and saves it to the user's client storage.
+    - `paste-collection`: Pastes the saved collection into the current Figma file.
+
+### UI.html
+
+The `ui.html` file defines the user interface for the plugin. It includes a dropdown to select a collection, and buttons to copy and paste collections.
+
+- **Styles**: The UI is styled to match Figma's light and dark themes.
+- **Elements**:
+    - A dropdown (`select`) to list available collections.
+    - Buttons (`button`) to copy and paste collections.
+    - A status message (`p`) to display feedback to the user.
+- **Scripts**:
+    - Sends messages to the plugin to request collections and check for saved collections on load.
+    - Handles user interactions such as selecting a collection and clicking the copy/paste buttons.
+    - Receives messages from the plugin and updates the UI accordingly.
 
 ## Usage
 
-Here's a simple example of how to use the `copy-variables` utility:
+1. **Open the Plugin**: Run the plugin in your Figma file.
+2. **Select a Collection**: Choose a variable collection from the dropdown.
+3. **Copy the Collection**: Click the "Copy Collection" button to copy the selected collection.
+4. **Paste the Collection**: Click the "Paste Collection" button to paste the copied collection into the current Figma file.
 
-```javascript
-const copyVariables = require('copy-variables');
+## Conclusion
 
-let source = { a: 1, b: 2 };
-let target = {};
-
-copyVariables(source, target);
-
-console.log(target); // { a: 1, b: 2 }
-```
-
-## License
-
-This project is licensed under the MIT License.
+The Copy Variables Plugin simplifies the process of managing variable collections in Figma, making it easy to copy and paste collections across different files and projects.
