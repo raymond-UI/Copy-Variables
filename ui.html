@@ -1,16 +1,93 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    button, select { display: block; width: 100%; margin: 10px 0; padding: 10px; }
-    h2 { margin-bottom: 20px; }
-    #btnwwrapper { display: flex; justify-content: space-between; gap: 16px; }
+    .figma-light body {
+      background-color: var(--figma-color-bg);
+      color: var(--figma-color-text);
+    }
+
+    .figma-dark body {
+      background-color: var(--figma-color-bg);
+      color: var(--figma-color-text);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    button,
+    select {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+
+    button {
+      color: var(--figma-color-text-oncomponent);
+      background-color: var(--figma-color-bg-component);
+      margin-bottom: 16px;
+      border: 1px solid var(--figma-color-border);
+    }
+
+    button:hover {
+      background-color: var(--figma-color-bg-component-hover);
+    }
+
+    button:active {
+      background-color: var(--figma-color-bg-brand);
+    }
+
+    button:disabled {
+      background-color: var(--figma-color-bg-disabled);
+      cursor: not-allowed;
+    }
+
+    select {
+      background-color: var(--figma-color-bg);
+      border: 1px solid var(--figma-color-border-component);
+      margin-bottom: 24px;
+      color: var(--figma-color-text-component);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font: 1em sans-serif;
+    }
+
+    #btnwwrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      margin-top: 16px;
+    }
+
+    #status {
+      background-color: var(--figma-color-bg-success-tertiary);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      color: var(--figma-color-text-onsuccess);
+      font-size: 14px;
+
+    }
   </style>
 </head>
+
 <body>
-  <h2>Variable Collection Copier</h2>
-  <div >
+  <p id="status"></p>
+
+  <h2>Select a collection</h2>
+  <div>
     <select id="collectionSelect">
       <option value="">-- Select Collection --</option>
     </select>
@@ -19,13 +96,14 @@
       <button id="pasteBtn" disabled>Paste Collection</button>
     </div>
   </div>
-  <p id="status"></p>
 
   <script>
     let copiedCollection = null;
 
     // Request all collections when UI loads
     parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
+    // Check for saved collection data when UI loads
+    parent.postMessage({ pluginMessage: { type: 'check-saved-collection' } }, '*');
 
     const selectElement = document.getElementById('collectionSelect');
     const copyButton = document.getElementById('copyBtn');
@@ -58,7 +136,7 @@
 
       if (msg.type === 'no-collections') {
         statusElement.textContent = 'No variable collections found.';
-      } 
+      }
 
       else if (msg.type === 'collections-list') {
         selectElement.innerHTML = '<option value="">-- Select Collection --</option>';
@@ -68,18 +146,29 @@
           option.textContent = collection.name;
           selectElement.appendChild(option);
         });
-      } 
+      }
 
       else if (msg.type === 'collection-copied') {
         copiedCollection = msg.data;
         pasteButton.disabled = false;
         statusElement.textContent = 'Collection copied. Ready to paste!';
-      } 
+      }
 
       else if (msg.type === 'collection-pasted') {
         statusElement.textContent = 'Collection pasted successfully!';
       }
+
+      else if (msg.type === 'saved-collection-found') {
+        copiedCollection = msg.data;
+        pasteButton.disabled = false;
+        statusElement.textContent = 'Saved collection found. Ready to paste!';
+      }
+
+      else if (msg.type === 'no-saved-collection') {
+        statusElement.textContent = 'No saved collection found.';
+      }
     };
   </script>
 </body>
+
 </html>
