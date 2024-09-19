@@ -5,9 +5,10 @@ type Mode = {
 
 type VariableInfo = {
   name: string;
+  id: string;
   resolvedType: VariableResolvedDataType;
   valuesByMode: { [modeId: string]: VariableValue };
-  scopes? : VariableScope[];
+  scopes?: VariableScope[];
 };
 
 type CollectionInfo = {
@@ -17,7 +18,7 @@ type CollectionInfo = {
   variables: VariableInfo[];
 };
 
-figma.showUI(__html__, { themeColors: true,  width: 255, height: 400 });
+figma.showUI(__html__, { themeColors: true, width: 255, height: 400 });
 
 figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: CollectionInfo }) => {
   if (msg.type === 'get-collections') {
@@ -34,7 +35,6 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
 
     figma.ui.postMessage({ type: 'collections-list', data: collectionsInfo });
   } 
-
   else if (msg.type === 'check-saved-collection') {
     const userId = figma.currentUser?.id;
     if (!userId) {
@@ -49,7 +49,6 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
       figma.ui.postMessage({ type: 'no-saved-collection' });
     }
   }
-
   else if (msg.type === 'copy-collection' && msg.collectionId) {
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
     const selectedCollection = collections.find(c => c.id === msg.collectionId);
@@ -66,10 +65,16 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
       name: selectedCollection.name,
       modes: selectedCollection.modes,
       variables: variables.filter((v): v is Variable => v !== null).map(v => ({
+        id: v.id,
         name: v.name,
         resolvedType: v.resolvedType,
         valuesByMode: Object.fromEntries(
-          Object.entries(v.valuesByMode).map(([modeId, value]) => [modeId, value as VariableValue])
+          Object.entries(v.valuesByMode).map(([modeId, value]) => {
+            if (value && typeof value === 'object' && 'type' in value && value.type === 'VARIABLE_ALIAS') {
+              return [modeId, { type: 'VARIABLE_ALIAS', id: (value as VariableAlias).id }];
+            }
+            return [modeId, value as VariableValue];
+          })
         ),
         scopes: v.scopes || []
       }))
@@ -85,7 +90,6 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
 
     figma.ui.postMessage({ type: 'collection-copied', data: collectionData });
   } 
-
   else if (msg.type === 'paste-collection') {
     const userId = figma.currentUser?.id;
     if (!userId) {
@@ -108,19 +112,40 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
         modeIdMap[mode.modeId] = newMode;
     });
 
+    const variableIdMap: { [oldId: string]: string } = {};
+
+    // First pass: create all variables
     for (const v of collectionData.variables) {
-        const newVariable = figma.variables.createVariable(v.name, newCollection, v.resolvedType);
+      const newVariable = figma.variables.createVariable(v.name, newCollection, v.resolvedType);
+      if (v.scopes) {
+        newVariable.scopes = v.scopes;
+      }
+      variableIdMap[v.id] = newVariable.id;
+    }
 
-        if (v.scopes) {
-          newVariable.scopes = v.scopes;
-        }
-
+    // Second pass: set values and resolve aliases
+    for (const v of collectionData.variables) {
+      const newVariable = await figma.variables.getVariableByIdAsync(variableIdMap[v.id]);
+      if (newVariable) {
         for (const [oldModeId, value] of Object.entries(v.valuesByMode)) {
-            const newModeId = modeIdMap[oldModeId];
-            if (newModeId) {
-                newVariable.setValueForMode(newModeId, value as VariableValue);
+          const newModeId = modeIdMap[oldModeId];
+          if (newModeId) {
+            if (value && typeof value === 'object' && 'type' in value && value.type === 'VARIABLE_ALIAS') {
+              const aliasedVariableId = (value as VariableAlias).id;
+              const newAliasId = variableIdMap[aliasedVariableId];
+              if (newAliasId) {
+                const aliasedVariable = await figma.variables.getVariableByIdAsync(newAliasId);
+                if (aliasedVariable) {
+                  const newAlias = figma.variables.createVariableAlias(aliasedVariable);
+                  newVariable.setValueForMode(newModeId, newAlias);
+                }
+              }
+            } else {
+              newVariable.setValueForMode(newModeId, value as VariableValue);
             }
+          }
         }
+      }
     }
 
     figma.ui.postMessage({ type: 'collection-pasted' });
