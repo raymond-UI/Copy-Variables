@@ -7,6 +7,7 @@ type VariableInfo = {
   name: string;
   resolvedType: VariableResolvedDataType;
   valuesByMode: { [modeId: string]: any };
+  scopes? : VariableScope[];
 };
 
 type CollectionInfo = {
@@ -69,7 +70,8 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
         resolvedType: v.resolvedType,
         valuesByMode: Object.fromEntries(
           Object.entries(v.valuesByMode).map(([modeId, value]) => [modeId, value as VariableValue])
-        )
+        ),
+        scopes: v.scopes || []
       }))
     };
 
@@ -108,6 +110,10 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
 
     for (const v of collectionData.variables) {
         const newVariable = figma.variables.createVariable(v.name, newCollection, v.resolvedType);
+
+        if (v.scopes) {
+          newVariable.scopes = v.scopes;
+        }
 
         for (const [oldModeId, value] of Object.entries(v.valuesByMode)) {
             const newModeId = modeIdMap[oldModeId];
