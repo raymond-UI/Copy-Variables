@@ -6,7 +6,7 @@ type Mode = {
 type VariableInfo = {
   name: string;
   resolvedType: VariableResolvedDataType;
-  valuesByMode: { [modeId: string]: any };
+  valuesByMode: { [modeId: string]: VariableValue };
   scopes? : VariableScope[];
 };
 
