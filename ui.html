@@ -19,19 +19,19 @@
       align-items: stretch;
 
       font-family: sans-serif;
-      padding: 20px;
+      padding: 20px 16px;
     }
 
     button,
     select {
       display: block;
       width: 100%;
-      padding: 10px;
       border-radius: 16px;
       cursor: pointer;
     }
 
     button {
+      padding: 8px;
       color: var(--figma-color-text-oncomponent);
       background-color: var(--figma-color-bg-component);
       margin-bottom: 16px;
@@ -52,11 +52,13 @@
     }
 
     select {
+      padding: 8px 16px;
       background-color: var(--figma-color-bg);
-      border: 1px solid var(--figma-color-border-component);
+      border: 1px solid var(--figma-color-border);
       margin-bottom: 24px;
-      color: var(--figma-color-text-component);
+      color: var(--figma-color-text);
     }
+
 
     h2 {
       text-align: center;
@@ -68,34 +70,36 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      margin-top: 16px;
+      margin-top: 25%;
     }
 
     #status {
-      background-color: var(--figma-color-bg-success-tertiary);
+      border: 1px solid var(--figma-color-border-success);
       border-radius: 8px;
       padding: 8px;
       text-align: center;
-      color: var(--figma-color-text-onsuccess);
+      color: var(--figma-color-text-success);
       font-size: 14px;
-
+      line-height: 1.5;
     }
+
+   
   </style>
 </head>
 
 <body>
   <p id="status"></p>
 
-  <h2>Select a collection</h2>
   <div>
-    <select id="collectionSelect">
-      <option value="">-- Select Collection --</option>
-    </select>
+      <select id="collectionSelect">
+        <option value="">- Select a Collection -</option>
+      </select>
+    
     <div id="btnwwrapper">
       <button id="copyBtn" disabled>Copy Collection</button>
       <button id="pasteBtn" disabled>Paste Collection</button>
     </div>
-  </div>
+    </div>
 
   <script>
     let copiedCollection = null;
@@ -151,17 +155,17 @@
       else if (msg.type === 'collection-copied') {
         copiedCollection = msg.data;
         pasteButton.disabled = false;
-        statusElement.textContent = `${copiedCollection.name} copied.`;
+        statusElement.textContent = `[${copiedCollection.name}] copied.`;
       }
 
       else if (msg.type === 'collection-pasted') {
-        statusElement.textContent = `${copiedCollection.name} pasted successfully!`;
+        statusElement.textContent = `[${copiedCollection.name}] pasted successfully!`;
       }
 
       else if (msg.type === 'saved-collection-found') {
         copiedCollection = msg.data;
         pasteButton.disabled = false;
-        statusElement.textContent = `Found: ${copiedCollection.name}. Ready to paste!`; // Display collection name
+        statusElement.textContent = `Found: [${copiedCollection.name}]. Ready to paste!`; // Display collection name
       }
 
       else if (msg.type === 'no-saved-collection') {
