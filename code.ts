@@ -45,10 +45,17 @@ figma.ui.onmessage = async (msg: { type: string; collectionId?: string; data?: C
     const collectionData = await figma.clientStorage.getAsync(`collection-${userId}`);
     if (collectionData) {
       figma.ui.postMessage({ type: 'saved-collection-found', data: collectionData });
+      
+      figma.ui.postMessage({ 
+        type: 'saved-collection-status', 
+        message: `Saved collection found: ${collectionData.name}. Ready to paste!` 
+    });
     } else {
       figma.ui.postMessage({ type: 'no-saved-collection' });
     }
   }
+
+
   else if (msg.type === 'copy-collection' && msg.collectionId) {
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
     const selectedCollection = collections.find(c => c.id === msg.collectionId);

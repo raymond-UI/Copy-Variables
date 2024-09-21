@@ -151,17 +151,17 @@
       else if (msg.type === 'collection-copied') {
         copiedCollection = msg.data;
         pasteButton.disabled = false;
-        statusElement.textContent = 'Collection copied. Ready to paste!';
+        statusElement.textContent = `${copiedCollection.name} copied.`;
       }
 
       else if (msg.type === 'collection-pasted') {
-        statusElement.textContent = 'Collection pasted successfully!';
+        statusElement.textContent = `${copiedCollection.name} pasted successfully!`;
       }
 
       else if (msg.type === 'saved-collection-found') {
         copiedCollection = msg.data;
         pasteButton.disabled = false;
-        statusElement.textContent = 'Saved collection found. Ready to paste!';
+        statusElement.textContent = `Found: ${copiedCollection.name}. Ready to paste!`; // Display collection name
       }
 
       else if (msg.type === 'no-saved-collection') {
